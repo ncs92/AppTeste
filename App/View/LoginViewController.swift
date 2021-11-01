@@ -6,8 +6,11 @@
 //
 
 import UIKit
+import Foundation
 
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, LoginProtocol {
+    var loginViewModel: LoginViewModel?
+    var customLoadingView: CustomLoadingView?
     
     let pencilImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(systemName: "pencil.and.outline"))
@@ -34,28 +37,33 @@ class LoginViewController: UIViewController {
         return textView
      }()
     
+    let emailInputView: CustomInputView = {
+        let customInputView = CustomInputView()
+        customInputView.customTextField.placeholder = "E-mail"
+        customInputView.customTextField.textContentType = .emailAddress
+        customInputView.customTextField.required = true
+        customInputView.customTextField.messageError = "E-mail inválido"
+        customInputView.customTextField.validateFunction = ValidationHelper.validateEmail
+        return customInputView
+    }()
     
-    let emailTextField: CustomTextField = {
-        let textField = CustomTextField()
-        textField.placeholder = "E-mail"
-        textField.textContentType = .emailAddress
-        return textField
-    } ()
-    
-    let passwordTextField: CustomTextField = {
-        let textField = CustomTextField()
-        textField.placeholder = "Senha"
-        textField.textContentType = .password
-        textField.isSecureTextEntry = true
-        return textField
-    } ()
+    let passwordInputView: CustomInputView = {
+        let customInputView = CustomInputView()
+        customInputView.customTextField.placeholder = "Senha"
+        customInputView.customTextField.required = true
+        customInputView.customTextField.textContentType = .password
+        customInputView.customTextField.isSecureTextEntry = true
+        customInputView.customTextField.messageError = "A senha deve possuir pelo menos 8 caracteres, ao menos uma letra maiúscula e um número"
+        customInputView.customTextField.validateFunction = ValidationHelper.validatePassword
+        return customInputView
+    }()
     
     let forgotPasswordButton: UIButton = {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("Esqueceu sua senha?", for: .normal)
         button.titleLabel?.textAlignment = .right
-        button.backgroundColor = .brown
+        button.contentHorizontalAlignment = .right
         return button
     }()
     
@@ -72,7 +80,8 @@ class LoginViewController: UIViewController {
        let textView = CustomLabel()
         textView.text = "Não tem uma conta?"
         textView.font = UIFont.boldSystemFont(ofSize: 18)
-        textView.backgroundColor = .purple
+        textView.textAlignment = .right
+        textView.textColor = .lightGray
         return textView
     }()
     
@@ -81,7 +90,7 @@ class LoginViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("REGISTRE-SE", for: .normal)
         button.setTitleColor(UIColor.secondary(), for: .normal)
-        button.backgroundColor = .green
+        button.contentHorizontalAlignment = .left
         return button
     }()
     
@@ -91,7 +100,6 @@ class LoginViewController: UIViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 20.0
-//        stack.backgroundColor = .red
         stack.alignment = .leading
         stack.translatesAutoresizingMaskIntoConstraints = false
         
@@ -112,21 +120,16 @@ class LoginViewController: UIViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 10.0
-        stack.backgroundColor = .purple
         stack.alignment = .fill
-        stack.distribution = .fillProportionally
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         return stack
     }()
     
-    let stackViewActions: UIStackView = {
+    let stackViewFooter: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 10.0
-        stack.backgroundColor = .gray
-        stack.alignment = .fill
-        stack.distribution = .fillProportionally
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         return stack
@@ -140,8 +143,7 @@ class LoginViewController: UIViewController {
     let stackViewRegister: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
-        stack.spacing = 0
-        stack.backgroundColor = .black
+        stack.spacing = 8
         stack.alignment = .center
         stack.distribution = .fillProportionally
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -155,7 +157,6 @@ class LoginViewController: UIViewController {
         stack.spacing = 20
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
-//        stack.backgroundColor = .blue
         return stack
     }()
     
@@ -163,22 +164,42 @@ class LoginViewController: UIViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 10
-//        stack.backgroundColor = .blue
         stack.alignment = .fill
         stack.distribution = .equalCentering
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         return stack
     }()
-
+    
+    let scrollView: UIScrollView = {
+        let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        scroll.bounces = false
+        return scroll
+    }()
+    
+    let viewContent: UIView = {
+        let viewBody = UIView()
+        viewBody.translatesAutoresizingMaskIntoConstraints = false
+        return viewBody
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if (UserService.hasToken() && UserService.hasUser()) {
+            self.navigationController?.pushViewController(HomeViewController(), animated: true)
+        }
+        view.addSubview(scrollView)
         view.backgroundColor = UIColor.primary()
-        view.addSubview(stackViewContent)
-       
+        
+        loginViewModel = LoginViewModel()
+        loginViewModel?.delegate = self
+        
         setupLayout()
         setupActions()
+                
+        customLoadingView = CustomLoadingView(controller: self)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -192,44 +213,98 @@ class LoginViewController: UIViewController {
         stackViewHeader.addArrangedSubview(pencilImageView)
         stackViewHeader.addArrangedSubview(stackViewTitles)
         
-        stackViewForm.addArrangedSubview(emailTextField)
-        stackViewForm.addArrangedSubview(passwordTextField)
+        stackViewForm.addArrangedSubview(emailInputView)
+        stackViewForm.addArrangedSubview(passwordInputView)
         stackViewForm.addArrangedSubview(forgotPasswordButton)
         
         stackViewRegister.addArrangedSubview(doNotHaveAccountTextView)
         stackViewRegister.addArrangedSubview(registerButton)
         
-        stackViewActions.addArrangedSubview(loginButton)
-        stackViewActions.addArrangedSubview(stackViewRegister)
+        stackViewFooter.addArrangedSubview(loginButton)
+        stackViewFooter.addArrangedSubview(stackViewRegister)
         
         stackViewBody.addArrangedSubview(stackViewHeader)
         stackViewBody.addArrangedSubview(stackViewForm)
         
         stackViewContent.addArrangedSubview(stackViewBody)
-        stackViewContent.addArrangedSubview(stackViewActions)
+        stackViewContent.addArrangedSubview(stackViewFooter)
     }
     
     func setupLayout() {
         setArrangedSubviewStacks()
+        viewContent.addSubview(stackViewContent)
+        setupScrollView()
         
-        stackViewContent.topAnchor.constraint(equalTo: view.topAnchor, constant: 20).isActive = true
-        stackViewContent.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20).isActive = true
-        stackViewContent.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20).isActive = true
-        stackViewContent.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20).isActive = true
+        stackViewContent.topAnchor.constraint(equalTo: viewContent.topAnchor, constant: 20).isActive = true
+        stackViewContent.leftAnchor.constraint(equalTo: viewContent.leftAnchor, constant: 20).isActive = true
+        stackViewContent.rightAnchor.constraint(equalTo: viewContent.rightAnchor, constant: -20).isActive = true
+        stackViewContent.bottomAnchor.constraint(equalTo: viewContent.bottomAnchor, constant: -20).isActive = true
     }
+    
+    func setupScrollView(){
+        scrollView.addSubview(viewContent)
+        
+        scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+           
+        scrollView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0).isActive = true
+           
+        scrollView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        scrollView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+
+        scrollView.autoresizingMask = .flexibleHeight
+        viewContent.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor).isActive = true
+        viewContent.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor).isActive = true
+        
+        viewContent.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
+        viewContent.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor).isActive = true
+        
+        viewContent.heightAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.heightAnchor).isActive = true
+        viewContent.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+
+       }
     
     @objc func goToRegisterView() {
         navigationController?.pushViewController(RegisterViewController(), animated: true)
     }
     
-    @objc func goToHomeView() {
-        navigationController?.pushViewController(HomeViewController(), animated: true)
+    @objc func onLogin() {
+        guard let email = emailInputView.customTextField.text else { return }
+        guard let password = passwordInputView.customTextField.text else { return }
+        
+        guard let viewModel = loginViewModel else { return }
+        
+        var validateFields: Array<Bool> = []
+        
+        validateFields.append(emailInputView.hasError)
+        validateFields.append(passwordInputView.hasError)
+        
+        let isValidForm = viewModel.validateForm(validateFields: validateFields)
+        
+        if (isValidForm) {
+            customLoadingView?.startLoading()
+            viewModel.requestLogin(email: email, password: password)
+        } else {
+            let alert = Alert(controller: self)
+            alert.show("Os dados informados estão inválidos. Verifique o e-mail e a senha e tente novamente.")
+        }
     }
 
     func setupActions() {
         registerButton.addTarget(self, action: #selector(goToRegisterView), for: .touchUpInside)
-        
-        loginButton.addTarget(self, action: #selector(goToHomeView), for: .touchUpInside)
+        loginButton.addTarget(self, action: #selector(onLogin), for: .touchUpInside)
+    }
+    
+    func sucessLogin() {
+        customLoadingView?.stopLoading()
+        navigationController?.pushViewController(HomeViewController(), animated: true)
+    }
+    
+    func errorLogin(_ message: String) {
+        customLoadingView?.stopLoading()
+        let alert = Alert(controller: self)
+        alert.show(message)
     }
 
 }

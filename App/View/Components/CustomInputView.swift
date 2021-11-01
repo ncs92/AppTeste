@@ -50,8 +50,8 @@ class CustomInputView: UIView {
         self.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(_customTextField)
         self.addSubview(errorLabelView)
-//        self.backgroundColor = .yellow
         
+        self.errorLabelView.numberOfLines = 3
         setupLayout()
         
         self._customTextField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingDidEnd)
@@ -66,19 +66,18 @@ class CustomInputView: UIView {
     @objc func textFieldDidChange(_ textField: UITextField) {
         if (self._customTextField.required) {
             guard let valueTextField = textField.text  else { return }
-  
+      
             let isValidFunction = self._customTextField.validateFunction(valueTextField)
           
-            print(isValidFunction)
             if (!isValidFunction) {
                 self.errorLabelView.text = self._customTextField.messageError
                 self.errorLabelView.isHidden = false
-//                anchorErrorLabel(isActive: true)
                 self._hasError = true
                 return
             }
             self.errorLabelView.isHidden = true
-//            anchorErrorLabel(isActive: false)
+            self.errorLabelView.widthAnchor.constraint(equalToConstant: 0).isActive = true
+            self.errorLabelView.heightAnchor.constraint(equalToConstant: 0).isActive = true
             self._hasError = false
         }
         
@@ -89,28 +88,20 @@ class CustomInputView: UIView {
         customTextField.leftAnchor.constraint(equalTo: self.leftAnchor).isActive = true
         customTextField.rightAnchor.constraint(equalTo: self.rightAnchor).isActive = true
         
-        anchorErrorLabel(isActive: true)
+        errorLabelView.topAnchor.constraint(equalTo: customTextField.bottomAnchor, constant: 10).isActive = true
+        errorLabelView.leftAnchor.constraint(equalTo: self.leftAnchor).isActive = true
+        errorLabelView.rightAnchor.constraint(equalTo: self.rightAnchor).isActive = true
+        errorLabelView.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
     }
-    
-    private func anchorErrorLabel(isActive: Bool) {
-        errorLabelView.topAnchor.constraint(equalTo: customTextField.bottomAnchor, constant: 10).isActive = isActive
-        errorLabelView.leftAnchor.constraint(equalTo: self.leftAnchor).isActive = isActive
-        errorLabelView.rightAnchor.constraint(equalTo: self.rightAnchor).isActive = isActive
-        errorLabelView.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = isActive
-    }
-    
+        
     private func changeStatusShowError() {
         if (self._showError) {
-            print(self.customTextField.messageError)
-            
             errorLabelView.text = self.customTextField.messageError
             self.errorLabelView.isHidden = false
-//            anchorErrorLabel(isActive: true)
             self._hasError = true
 
         } else {
             self.errorLabelView.isHidden = true
-//            anchorErrorLabel(isActive: false)
             self._hasError = false
         }
         self.layoutIfNeeded()

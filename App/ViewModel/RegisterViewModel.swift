@@ -33,12 +33,10 @@ class RegisterViewModel {
 
     
     func requestRegister(name: String, email: String, cpf: String, phoneNumber: String, password: String, emailUpdatesAllowed: Bool) {
-        print(name, email, cpf, phoneNumber, password, emailUpdatesAllowed)
-        
+  
         UserRequest.register(name: name, email: email, password: password, phoneNumber: phoneNumber, emailUpdatesAllowed: emailUpdatesAllowed, cpf: cpf) { response in
             guard let safeDelegate = self.delegate else { return }
             
-            print("EEror", response.error)
             if (response.response?.statusCode == 200) {
                 safeDelegate.sucessRegister("Registro realizado com sucesso!")
             } else {
@@ -46,12 +44,5 @@ class RegisterViewModel {
             }
             debugPrint(response)
         }
-    }
-    
-    
-    func saveDataUser(id:String, name: String, email: String, cpf: String) {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
-        
-        UserService.saveDataUser(id: id, name: name, email: email, cpf: cpf, appDelegate: appDelegate)
     }
 }

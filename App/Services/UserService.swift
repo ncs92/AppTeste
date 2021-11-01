@@ -9,9 +9,10 @@ import Foundation
 
 class UserService {
     private static let TOKEN = "TOKEN"
+    private static let USER = "USER"
     
     static func setToken(_ token: String) {
-        UserDefaults.standard.setValue(token, forKey: token)
+        UserDefaults.standard.setValue(token, forKey: TOKEN)
     }
     
     static func getToken() -> String? {
@@ -22,40 +23,26 @@ class UserService {
         return getToken() != nil
     }
     
-    static func saveDataUser(id:String, name: String, email: String, cpf: String, appDelegate: AppDelegate) {
-        let context = appDelegate.persistentContainer.viewContext
-        
-        let newUser = User(context: context)
-        newUser.setValue(id, forKey: "id")
-        newUser.setValue(name, forKey: "name")
-        newUser.setValue(email, forKey: "email")
-        newUser.setValue(cpf, forKey: "cpf")
-        
-        do {
-           try context.save()
-          } catch {
-           print("Failed saving")
-        }
+    static func saveUser(id: String, name: String, cpf: String, email: String) {
+        let user: [String : String] = [
+            "id": id,
+            "name": name,
+            "cpf": cpf,
+            "email": email
+        ]
+        UserDefaults.standard.setValue(user, forKey: USER)
     }
     
-    static func deleteUser(user: User, appDelegate: AppDelegate) {
-        let context = appDelegate.persistentContainer.viewContext
-        context.delete(user)
-        
-        do {
-           try context.save()
-          } catch {
-           print("Failed delete")
-        }
+    static func logout() {
+        UserDefaults.standard.removeObject(forKey: USER)
+        UserDefaults.standard.removeObject(forKey: TOKEN)
     }
     
-    static func getUser(appDelegate: AppDelegate) {
-        do {
-            let context = appDelegate.persistentContainer.viewContext
-            let users = try context.fetch(User.fetchRequest())
-            print("user ", users)
-        } catch {
-            // error
-        }
+    static func getUser() -> [String: Any]? {
+        return UserDefaults.standard.dictionary(forKey: USER)
+    }
+    
+    static func hasUser() -> Bool {
+        return getUser() != nil
     }
 }

@@ -9,32 +9,51 @@ import Foundation
 import UIKit
 
 class HomeViewController: UIViewController {
-    
-    let contentView: UIView = {
-        let content = UIView()
-        
-        return content
-    }()
-    
+    private let welcomeText: CustomLabel = CustomLabel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
                 
         view.backgroundColor = UIColor.primary()
-        view.addSubview(contentView)
+        view.addSubview(welcomeText)
+        
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(logout))
+        self.navigationItem.rightBarButtonItem?.tintColor = UIColor.secondary()
+        self.navigationItem.hidesBackButton = true        
        
         setupLayout()
+        setWelcomeText()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         self.navigationController?.navigationBar.isHidden = false
     }
     
-    func setupLayout() {
+    func setWelcomeText() {
+        guard let user = UserService.getUser() else { return }
+        guard let userName = user["name"] else { return }
+
+        welcomeText.numberOfLines = 6
         
-        contentView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20).isActive = true
-        contentView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20).isActive = true
-        contentView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20).isActive = true
-        contentView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20).isActive = true
+        let paragraphStyle: NSMutableParagraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = NSTextAlignment.right
+        
+        let attributedText =  NSMutableAttributedString(string: "")
+        attributedText.append(NSAttributedString(string: "Olá,\n", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 20), NSAttributedString.Key.foregroundColor: UIColor.white]))
+        attributedText.append(NSAttributedString(string: "\(userName)\n", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize:60), NSAttributedString.Key.foregroundColor: UIColor.white]))
+        attributedText.append(NSAttributedString(string: "Você foi logado com sucesso!", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 20), NSAttributedString.Key.foregroundColor: UIColor.white, NSAttributedString.Key.paragraphStyle: paragraphStyle
+                                                                
+        ]))
+        welcomeText.attributedText = attributedText
+    }
+    
+    func setupLayout() {
+        welcomeText.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        welcomeText.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
+    }
+    
+    @objc func logout() {
+        UserService.logout()
+        self.navigationController?.popViewController(animated: true)
     }
 }

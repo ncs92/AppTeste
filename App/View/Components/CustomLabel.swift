@@ -14,7 +14,6 @@ class CustomLabel: UILabel {
         
         self.translatesAutoresizingMaskIntoConstraints = false
         self.textColor = .white
-//        self.backgroundColor = .none
     }
     
     required init?(coder: NSCoder) {

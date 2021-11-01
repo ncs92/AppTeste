@@ -10,9 +10,7 @@ import UIKit
 
 class RegisterViewController: UIViewController, RegisterProtocol {
     var registerViewModel: RegisterViewModel?
-    
-//    let activityIndicator = CustomActivityIndicator(style: UIActivityIndicatorView.Style.large)
-//    let customVisualEffect = CustomVisualEffectView()
+    var customLoadingView: CustomLoadingView?
     
     // MARK: - StackViewHeader
     
@@ -39,7 +37,6 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         stack.spacing = 10
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
-//        stack.backgroundColor = .green
         return stack
     }()
     
@@ -105,10 +102,9 @@ class RegisterViewController: UIViewController, RegisterProtocol {
     }()
     
     let receiveUpdatesTextView: CustomLabel = {
-       let textView = CustomLabel()
+        let textView = CustomLabel()
         textView.text = "Receber atualizações por e-mail"
         textView.font = UIFont.systemFont(ofSize: 18)
-//        textView.backgroundColor = .purple
         return textView
     }()
     
@@ -124,7 +120,6 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         stack.spacing = 4
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
-//        stack.backgroundColor = .red
         return stack
     }()
     
@@ -134,7 +129,6 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         stack.spacing = 10
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
-//        stack.backgroundColor = .purple
         return stack
     }()
     
@@ -150,8 +144,9 @@ class RegisterViewController: UIViewController, RegisterProtocol {
        let textView = CustomLabel()
         textView.text = "Já possui uma conta?"
         textView.font = UIFont.boldSystemFont(ofSize: 18)
-        textView.backgroundColor = .purple
         textView.textAlignment = .center
+        textView.textAlignment = .right
+        textView.textColor = .lightGray
         return textView
     }()
     
@@ -160,7 +155,7 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("LOGIN", for: .normal)
         button.setTitleColor(UIColor.secondary(), for: .normal)
-        button.backgroundColor = .green
+        button.contentHorizontalAlignment = .left
         return button
     }()
         
@@ -175,9 +170,8 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.alignment = .center
-//        stackView.distribution = .fillProportionally
-        stackView.contentMode = .center
-        stackView.backgroundColor = .blue
+        stackView.spacing = 8
+        stackView.distribution = .fillProportionally
         return stackView
     }()
     
@@ -189,7 +183,6 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         stack.spacing = 20
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
-//        stack.backgroundColor = .blue
         return stack
     }()
     
@@ -202,13 +195,20 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         stack.alignment = .fill
         stack.distribution = .equalCentering
         stack.translatesAutoresizingMaskIntoConstraints = false
-//        stack.backgroundColor = .blue
         return stack
     }()
     
     let scrollView: UIScrollView = {
         let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        scroll.bounces = false
         return scroll
+    }()
+    
+    let viewContent: UIView = {
+        let viewBody = UIView()
+        viewBody.translatesAutoresizingMaskIntoConstraints = false
+        return viewBody
     }()
     
     override func viewDidLoad() {
@@ -219,11 +219,11 @@ class RegisterViewController: UIViewController, RegisterProtocol {
                 
         view.backgroundColor = UIColor.primary()
         view.addSubview(scrollView)
-//        view.addSubview(customVisualEffect)
-//        view.addSubview(activityIndicator)
        
         setupLayout()
         setupActions()
+        
+        customLoadingView = CustomLoadingView(controller: self)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -258,48 +258,38 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         stackViewContent.addArrangedSubview(stackViewFooter)
     }
     
-    let viewContent: UIView = {
-        let viewBody = UIView()
-        return viewBody
-    }()
-    
-    
     func setupLayout() {
-        viewContent.addSubview(stackViewContent)
-        
         setArrangedSubviewStacks()
+        viewContent.addSubview(stackViewContent)
         setupScrollView()
         
         stackViewContent.topAnchor.constraint(equalTo: viewContent.safeAreaLayoutGuide.topAnchor, constant: 20).isActive = true
         stackViewContent.leftAnchor.constraint(equalTo: viewContent.leftAnchor, constant: 20).isActive = true
         stackViewContent.rightAnchor.constraint(equalTo: viewContent.rightAnchor, constant: -20).isActive = true
         stackViewContent.bottomAnchor.constraint(equalTo: viewContent.bottomAnchor, constant: -20).isActive = true
-        
-//        customVisualEffect.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-//        customVisualEffect.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-//        customVisualEffect.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-//        customVisualEffect.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-//        
-//        activityIndicator.centerXAnchor.constraint(equalTo: customVisualEffect.centerXAnchor).isActive = true
-//        activityIndicator.centerYAnchor.constraint(equalTo: customVisualEffect.centerYAnchor).isActive = true
     }
     
     func setupScrollView(){
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.bounces = false
-        viewContent.translatesAutoresizingMaskIntoConstraints = false
- 
         scrollView.addSubview(viewContent)
+        
+        scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
            
-        scrollView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        scrollView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
         scrollView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0).isActive = true
            
-        viewContent.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor).isActive = true
-        viewContent.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
-        viewContent.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 20).isActive = true
-        viewContent.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -20).isActive = true
+        scrollView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        scrollView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+
+        scrollView.autoresizingMask = .flexibleHeight
+        viewContent.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor).isActive = true
+        viewContent.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor).isActive = true
+        
+        viewContent.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
+        viewContent.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor).isActive = true
+        
+        viewContent.heightAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.heightAnchor).isActive = true
+        viewContent.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
 
        }
     
@@ -323,8 +313,6 @@ class RegisterViewController: UIViewController, RegisterProtocol {
         
         let isValidForm: Bool = viewModel.validateForm(validateFields: validateFields, password: password, confirmPassword: confirmPassword)
         
-        print(isValidForm)
-        
         if (isValidForm) {
             guard let name = nameInputView.customTextField.text else { return }
             guard let email = emailInputView.customTextField.text else { return }
@@ -332,8 +320,7 @@ class RegisterViewController: UIViewController, RegisterProtocol {
             guard let phoneNumber = phoneInputView.customTextField.text else { return }
             let emailUpdatesAllowed = receiveUpdatesSwitch.isOn
             
-//            self.activityIndicator.loading = true
-//            self.customVisualEffect.isHidden = false
+            customLoadingView?.startLoading()
             
             viewModel.requestRegister(name: name, email: email, cpf: cpf, phoneNumber: phoneNumber, password: password, emailUpdatesAllowed: emailUpdatesAllowed)
         }
@@ -351,10 +338,7 @@ class RegisterViewController: UIViewController, RegisterProtocol {
     }
     
     func sucessRegister(_ message: String) {
-//        self.activityIndicator.isHidden = true
-//        self.activityIndicator.stopAnimating()
-//        self.customVisualEffect.isHidden = true
-        
+        customLoadingView?.stopLoading()
         let alert = Alert(controller: self)
         alert.show(message) { UIAlertAction in
             self.navigationController?.popViewController(animated: true)
@@ -362,11 +346,7 @@ class RegisterViewController: UIViewController, RegisterProtocol {
     }
     
     func errorRegister(_ message: String) {
-//        self.activityIndicator.isHidden = true
-//        self.activityIndicator.stopAnimating()
-//        self.customVisualEffect.isHidden = true
-        print("Entrou error ")
-        
+        customLoadingView?.stopLoading()
         let alert = Alert(controller: self)
         alert.show(message)
     }

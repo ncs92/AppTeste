@@ -20,9 +20,7 @@ class ValidationHelper {
     }
     
     static func validateName(_ name: String?) -> Bool {
-        print("Entrou validação nome, \(name)")
         guard let nameValue = name else { return false }
-        print("nome: \(nameValue) ")
         
         let nameTest = NSPredicate(format:"SELF MATCHES %@", NOME_REGEX);
         return nameTest.evaluate(with: nameValue)
